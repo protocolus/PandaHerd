@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PandaHerd Library</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Dropzone -->
+    <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css" type="text/css" />
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            50: '#f9fafb',
+                            100: '#f3f4f6',
+                            200: '#e5e7eb',
+                            300: '#d1d5db',
+                            400: '#9ca3af',
+                            500: '#6b7280',
+                            600: '#4b5563',
+                            700: '#374151',
+                            800: '#1f2937',
+                            900: '#111827',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .dropzone {
+            background: #1f2937;
+            border: 2px dashed #4b5563;
+            border-radius: 0.5rem;
+        }
+        .dropzone:hover {
+            border-color: #6b7280;
+        }
+        .dropzone .dz-message {
+            color: #9ca3af;
+        }
+    </style>
+</head>
+<body class="bg-dark-900 text-gray-100">
+    <div class="min-h-screen">
+        {% include 'nav.html' %}
+
+        <!-- Main content -->
+        <main class="py-6">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <!-- Upload Section -->
+                <div class="mb-8">
+                    <h2 class="text-lg font-medium mb-4">Upload 3MF Files</h2>
+                    <form action="/api/library/upload" class="dropzone" id="upload-dropzone"></form>
+                </div>
+
+                <!-- Library Grid -->
+                <div class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-lg font-medium">Your Library</h2>
+                        <div class="flex space-x-2">
+                            <input type="text" 
+                                   placeholder="Search files..." 
+                                   class="px-3 py-2 bg-dark-800 border border-dark-700 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <select class="px-3 py-2 bg-dark-800 border border-dark-700 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">All Categories</option>
+                                <option value="calibration">Calibration</option>
+                                <option value="functional">Functional</option>
+                                <option value="decorative">Decorative</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {% for file in files %}
+                        <div class="bg-dark-800 rounded-lg shadow-lg border border-dark-700 overflow-hidden">
+                            <div class="aspect-w-16 aspect-h-9 bg-dark-700">
+                                {% if file.thumbnail %}
+                                <img src="{{ file.thumbnail }}" alt="{{ file.name }}" class="object-cover">
+                                {% else %}
+                                <div class="flex items-center justify-center text-4xl text-gray-500">
+                                    <i class="fa-solid fa-cube"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="p-4 space-y-2">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="font-medium">{{ file.name }}</h3>
+                                        <p class="text-sm text-gray-400">{{ file.category }}</p>
+                                        {% if file.dimensions %}
+                                        <p class="text-xs text-gray-500">
+                                            {{ file.dimensions.width }}x{{ file.dimensions.depth }}x{{ file.dimensions.height }}mm
+                                            • {{ file.volume_cm3 }}cm³
+                                        </p>
+                                        {% endif %}
+                                        {% if file.bambu_metadata and file.bambu_metadata.ams_mapping %}
+                                        <div class="flex items-center space-x-2 mt-1">
+                                            {% for filament in file.bambu_metadata.ams_mapping %}
+                                            <div class="flex items-center space-x-1">
+                                                <div class="w-3 h-3 rounded-full" style="background-color: {{ filament.color }}"></div>
+                                                <span class="text-xs text-gray-400">{{ filament.name }}</span>
+                                                {% if not loop.last %}<span class="text-gray-400">•</span>{% endif %}
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <span class="text-xs text-gray-400">{{ file.uploaded }}</span>
+                                </div>
+                                <div class="flex items-center space-x-2 text-sm text-gray-400">
+                                    <span>{{ file.size }}</span>
+                                    <span>•</span>
+                                    <span>{{ file.print_time }}</span>
+                                    <span>•</span>
+                                    <span>{{ file.material }}</span>
+                                    {% if file.vertices %}
+                                    <span>•</span>
+                                    <span title="Vertices">{{ file.vertices }}v</span>
+                                    <span>•</span>
+                                    <span title="Triangles">{{ file.triangles }}t</span>
+                                    {% endif %}
+                                </div>
+                                {% if file.bambu_metadata and file.bambu_metadata.plate_info %}
+                                <div class="flex items-center space-x-2 text-xs text-gray-400 mt-1">
+                                    <span title="Plate Type">{{ file.bambu_metadata.plate_info.plate_type }}</span>
+                                    <span>•</span>
+                                    <span title="Bed Temperature">{{ file.bambu_metadata.plate_info.bed_temp }}°C</span>
+                                    {% if file.bambu_metadata.plate_info.chamber_temp > 0 %}
+                                    <span>•</span>
+                                    <span title="Chamber Temperature">{{ file.bambu_metadata.plate_info.chamber_temp }}°C chamber</span>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                <div class="flex space-x-2">
+                                    <button onclick="printFile('{{ file.id }}')"
+                                            class="flex-1 flex items-center justify-center space-x-1 px-3 py-2 bg-green-900 text-green-200 rounded-md border border-green-700 hover:bg-green-800">
+                                        <i class="fa-solid fa-print"></i>
+                                        <span>Print</span>
+                                    </button>
+                                    <button onclick="showFileDetails('{{ file.id }}')"
+                                            class="px-3 py-2 bg-dark-700 text-gray-300 rounded-md border border-dark-600 hover:bg-dark-600">
+                                        <i class="fa-solid fa-info"></i>
+                                    </button>
+                                    <button onclick="deleteFile('{{ file.id }}')"
+                                            class="px-3 py-2 bg-dark-700 text-gray-300 rounded-md border border-dark-600 hover:bg-dark-600">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Print Modal -->
+    <div id="printModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-dark-800 p-6 rounded-lg shadow-xl border border-dark-700 w-96">
+            <h3 class="text-lg font-medium mb-4">Print File</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Select Printer</label>
+                    <select id="printerSelect" class="w-full px-3 py-2 bg-dark-700 border border-dark-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        {% for printer in printers %}
+                        <option value="{{ printer.id }}">{{ printer.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closePrintModal()" 
+                            class="px-4 py-2 bg-dark-700 text-gray-300 rounded-md hover:bg-dark-600">
+                        Cancel
+                    </button>
+                    <button onclick="startPrint()" 
+                            class="px-4 py-2 bg-green-900 text-green-200 rounded-md border border-green-700 hover:bg-green-800">
+                        Start Print
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize dropzone
+        Dropzone.options.uploadDropzone = {
+            acceptedFiles: ".3mf",
+            dictDefaultMessage: "Drop .3MF files here or click to upload",
+            success: function(file, response) {
+                // Reload the page to show new files
+                window.location.reload();
+            }
+        };
+
+        let currentFileId = null;
+
+        function printFile(fileId) {
+            currentFileId = fileId;
+            document.getElementById('printModal').classList.remove('hidden');
+        }
+
+        function closePrintModal() {
+            document.getElementById('printModal').classList.add('hidden');
+            currentFileId = null;
+        }
+
+        async function startPrint() {
+            const printerId = document.getElementById('printerSelect').value;
+            try {
+                const response = await fetch('/api/library/print', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        file_id: currentFileId,
+                        printer_id: printerId
+                    })
+                });
+
+                if (response.ok) {
+                    window.location.href = '/'; // Redirect to dashboard
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Failed to start print');
+                }
+            } catch (error) {
+                alert('Failed to start print');
+            }
+            closePrintModal();
+        }
+
+        async function deleteFile(fileId) {
+            if (!confirm('Are you sure you want to delete this file?')) return;
+
+            try {
+                const response = await fetch(`/api/library/${fileId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Failed to delete file');
+                }
+            } catch (error) {
+                alert('Failed to delete file');
+            }
+        }
+
+        function showFileDetails(fileId) {
+            // TODO: Implement file details view
+            alert('File details coming soon!');
+        }
+    </script>
+</body>
+</html>

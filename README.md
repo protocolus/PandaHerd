@@ -15,6 +15,13 @@ A FastAPI-based management system for Bambu Lab 3D printer farms, providing real
 - Multi-printer control interface
 - Context-aware printer controls (Start/Pause, Stop)
 - RESTful API with OpenAPI documentation
+- Library feature:
+  - Upload and manage .3MF files
+  - Drag-and-drop file upload
+  - Print time and material estimates
+  - Send files directly to printers
+  - Categorize and search files
+  - File preview and details
 
 ## Quick Start
 

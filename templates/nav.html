@@ -9,14 +9,18 @@
                     v{{ version }}
                 </span>
             </div>
-            <nav class="flex items-center space-x-4">
-                <a href="/" class="text-gray-300 hover:text-white {% if active_page == 'dashboard' %}text-white font-medium{% endif %}">Dashboard</a>
-                <a href="/filament" class="text-gray-300 hover:text-white {% if active_page == 'filament' %}text-white font-medium{% endif %}">Filament</a>
-                <a href="/docs" 
-                   target="_blank"
-                   class="flex items-center space-x-2 px-3 py-2 text-sm font-medium bg-green-900 text-green-200 rounded-md border border-green-700 hover:bg-green-800 transition-colors duration-150">
-                    <i class="fa-solid fa-book"></i>
-                    <span>API Docs</span>
+            <nav class="flex space-x-4">
+                <a href="/" class="px-3 py-2 rounded-md text-sm font-medium {% if active_page == 'dashboard' %}bg-dark-700{% else %}hover:bg-dark-700{% endif %} {% if active_page == 'dashboard' %}text-white{% else %}text-gray-300{% endif %}">
+                    <i class="fa-solid fa-gauge-high mr-1"></i>Dashboard
+                </a>
+                <a href="/library" class="px-3 py-2 rounded-md text-sm font-medium {% if active_page == 'library' %}bg-dark-700{% else %}hover:bg-dark-700{% endif %} {% if active_page == 'library' %}text-white{% else %}text-gray-300{% endif %}">
+                    <i class="fa-solid fa-book mr-1"></i>Library
+                </a>
+                <a href="/filament" class="px-3 py-2 rounded-md text-sm font-medium {% if active_page == 'filament' %}bg-dark-700{% else %}hover:bg-dark-700{% endif %} {% if active_page == 'filament' %}text-white{% else %}text-gray-300{% endif %}">
+                    <i class="fa-solid fa-spool mr-1"></i>Filament
+                </a>
+                <a href="/docs" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-dark-700 hover:text-white">
+                    <i class="fa-solid fa-book-open mr-1"></i>API Docs
                 </a>
             </nav>
         </div>
