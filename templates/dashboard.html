@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PandaHerd Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            50: '#f9fafb',
+                            100: '#f3f4f6',
+                            200: '#e5e7eb',
+                            300: '#d1d5db',
+                            400: '#9ca3af',
+                            500: '#6b7280',
+                            600: '#4b5563',
+                            700: '#374151',
+                            800: '#1f2937',
+                            900: '#111827',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script>
+        let ws = new WebSocket("ws://" + window.location.host + "/ws");
+        ws.onmessage = function(event) {
+            const printers = JSON.parse(event.data);
+            updateDashboard(printers);
+        };
+
+        function updateDashboard(printers) {
+            const container = document.getElementById('printer-grid');
+            container.innerHTML = '';
+            
+            // Sort printers by name for consistent display
+            const sortedPrinters = Object.values(printers).sort((a, b) => a.name.localeCompare(b.name));
+            
+            for (const printer of sortedPrinters) {
+                container.appendChild(createPrinterCard(printer));
+            }
+        }
+
+        function createPrinterCard(printer) {
+            const card = document.createElement('div');
+            card.className = 'bg-dark-800 p-6 rounded-lg shadow-lg border border-dark-700 space-y-4';
+            
+            // Header with printer name and status
+            const header = document.createElement('div');
+            header.className = 'flex justify-between items-center';
+            
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'flex items-center space-x-2';
+            nameDiv.innerHTML = `
+                <i class="fa-solid fa-print text-2xl ${printer.status === 'printing' ? 'text-green-500' : 'text-gray-500'}"></i>
+                <h2 class="text-xl font-bold">${printer.name}</h2>
+            `;
+            
+            const statusBadge = document.createElement('span');
+            statusBadge.className = `px-2 py-1 text-sm font-medium rounded-md ${
+                printer.status === 'printing' ? 'bg-green-900 text-green-200 border border-green-700' :
+                printer.status === 'paused' ? 'bg-yellow-900 text-yellow-200 border border-yellow-700' :
+                'bg-gray-900 text-gray-200 border border-gray-700'
+            }`;
+            statusBadge.textContent = printer.status.charAt(0).toUpperCase() + printer.status.slice(1);
+            
+            header.appendChild(nameDiv);
+            header.appendChild(statusBadge);
+            card.appendChild(header);
+            
+            // Progress section
+            if (printer.current_job) {
+                const progress = document.createElement('div');
+                progress.className = 'space-y-2';
+                progress.innerHTML = `
+                    <div class="flex justify-between text-sm">
+                        <span>${printer.current_job.name}</span>
+                        <span>${Math.round(printer.current_job.progress)}%</span>
+                    </div>
+                    <div class="w-full bg-dark-700 rounded-full h-2">
+                        <div class="bg-blue-600 h-2 rounded-full" style="width: ${printer.current_job.progress}%"></div>
+                    </div>
+                `;
+                card.appendChild(progress);
+            }
+            
+            // AMS section
+            if (printer.ams) {
+                const amsSection = document.createElement('div');
+                amsSection.className = 'space-y-2';
+                
+                const amsHeader = document.createElement('div');
+                amsHeader.className = 'flex items-center space-x-2 text-sm font-medium text-gray-400';
+                amsHeader.innerHTML = `
+                    <i class="fa-solid fa-layer-group"></i>
+                    <span>AMS Status</span>
+                `;
+                amsSection.appendChild(amsHeader);
+                
+                const amsGrid = document.createElement('div');
+                amsGrid.className = 'grid grid-cols-2 gap-2';
+                
+                printer.ams.slots.forEach((slot, index) => {
+                    const slotDiv = document.createElement('div');
+                    slotDiv.className = 'flex items-center space-x-2';
+                    slotDiv.innerHTML = `
+                        <div class="w-4 h-4 rounded-full" style="background-color: ${slot.color}"></div>
+                        <span class="text-sm">${slot.remaining}%</span>
+                    `;
+                    amsGrid.appendChild(slotDiv);
+                });
+                
+                amsSection.appendChild(amsGrid);
+                card.appendChild(amsSection);
+            }
+            
+            // Controls section
+            const controls = document.createElement('div');
+            controls.className = 'flex space-x-2 mt-4';
+            
+            // Only show relevant controls based on printer status
+            if (printer.status === 'printing') {
+                controls.innerHTML = `
+                    <button class="flex-1 flex items-center justify-center space-x-1 px-3 py-2 bg-yellow-900 text-yellow-200 rounded-md border border-yellow-700 hover:bg-yellow-800 transition-colors duration-150">
+                        <i class="fa-solid fa-pause"></i>
+                        <span>Pause</span>
+                    </button>
+                    <button class="flex-1 flex items-center justify-center space-x-1 px-3 py-2 bg-red-900 text-red-200 rounded-md border border-red-700 hover:bg-red-800 transition-colors duration-150">
+                        <i class="fa-solid fa-stop"></i>
+                        <span>Stop</span>
+                    </button>
+                `;
+            } else if (printer.status === 'paused') {
+                controls.innerHTML = `
+                    <button class="flex-1 flex items-center justify-center space-x-1 px-3 py-2 bg-green-900 text-green-200 rounded-md border border-green-700 hover:bg-green-800 transition-colors duration-150">
+                        <i class="fa-solid fa-play"></i>
+                        <span>Resume</span>
+                    </button>
+                    <button class="flex-1 flex items-center justify-center space-x-1 px-3 py-2 bg-red-900 text-red-200 rounded-md border border-red-700 hover:bg-red-800 transition-colors duration-150">
+                        <i class="fa-solid fa-stop"></i>
+                        <span>Stop</span>
+                    </button>
+                `;
+            } else {
+                controls.innerHTML = `
+                    <button class="flex-1 flex items-center justify-center space-x-1 px-3 py-2 bg-green-900 text-green-200 rounded-md border border-green-700 hover:bg-green-800 transition-colors duration-150">
+                        <i class="fa-solid fa-play"></i>
+                        <span>Start</span>
+                    </button>
+                `;
+            }
+            
+            card.appendChild(controls);
+            return card;
+        }
+    </script>
+</head>
+<body class="bg-dark-900 text-gray-100">
+    <div class="min-h-screen">
+        {% include 'nav.html' %}
+
+        <!-- Main content -->
+        <main class="py-6">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div id="printer-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Printer cards will be dynamically inserted here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Initialize with server-side data
+        const initialPrinters = {{ printers | tojson | safe }};
+        updateDashboard(initialPrinters);
+    </script>
+</body>
+</html>

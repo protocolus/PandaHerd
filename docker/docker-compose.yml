@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  app:
+    build: 
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "4373:4373"
+    volumes:
+      - ..:/app
+    environment:
+      - MQTT_HOST=mqtt.bambulab.com
+      - MQTT_PORT=8883
+      - PYTHONPATH=/app
+    restart: unless-stopped
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "4373", "--reload"]

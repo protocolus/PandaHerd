@@ -169,3 +169,26 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Project specific
+*.db
+pandaherd.db
+*.sqlite3
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# IDE - VSCode
+.vscode/
+*.code-workspace
+.history/
+
+# Local development settings
+*.local
+*.local.*
+
+# Virtual environment
+.venv/
+venv/
+ENV/

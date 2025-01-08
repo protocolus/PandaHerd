@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PandaHerd - Filament Inventory</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            50: '#f9fafb',
+                            100: '#f3f4f6',
+                            200: '#e5e7eb',
+                            300: '#d1d5db',
+                            400: '#9ca3af',
+                            500: '#6b7280',
+                            600: '#4b5563',
+                            700: '#374151',
+                            800: '#1f2937',
+                            900: '#111827',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-dark-900 text-gray-100">
+    <div class="min-h-screen">
+        {% include 'nav.html' %}
+
+        <!-- Main content -->
+        <main class="py-6">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <!-- Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-dark-800 p-6 rounded-lg shadow-lg border border-dark-700">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-400">Total Spools</p>
+                                <p class="text-2xl font-bold">{{ total_spools }}</p>
+                            </div>
+                            <i class="fa-solid fa-boxes-stacked text-3xl text-gray-600"></i>
+                        </div>
+                    </div>
+                    <div class="bg-dark-800 p-6 rounded-lg shadow-lg border border-dark-700">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-400">Total Weight</p>
+                                <p class="text-2xl font-bold">{{ total_weight }}kg</p>
+                            </div>
+                            <i class="fa-solid fa-weight-scale text-3xl text-gray-600"></i>
+                        </div>
+                    </div>
+                    <div class="bg-dark-800 p-6 rounded-lg shadow-lg border border-dark-700">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-400">Low Stock</p>
+                                <p class="text-2xl font-bold">{{ low_stock_count }}</p>
+                            </div>
+                            <i class="fa-solid fa-triangle-exclamation text-3xl text-yellow-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filament Table -->
+                <div class="bg-dark-800 rounded-lg shadow-lg border border-dark-700">
+                    <div class="p-6 border-b border-dark-700">
+                        <h2 class="text-xl font-bold">Filament Inventory</h2>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-dark-700">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Spool</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Material</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Color</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Remaining</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Location</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Last Used</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-dark-700">
+                                {% for spool in spools %}
+                                <tr class="hover:bg-dark-700">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium">{{ spool.name }}</div>
+                                                <div class="text-sm text-gray-400">{{ spool.brand }}</div>
+                                                <div class="text-xs text-gray-500">ID: {{ spool.id }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full
+                                            {% if spool.material == 'PLA' %}bg-green-900 text-green-200 border border-green-700
+                                            {% elif spool.material == 'PETG' %}bg-blue-900 text-blue-200 border border-blue-700
+                                            {% elif spool.material == 'TPU' %}bg-purple-900 text-purple-200 border border-purple-700
+                                            {% else %}bg-gray-900 text-gray-200 border border-gray-700
+                                            {% endif %}">
+                                            {{ spool.material }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-6 h-6 rounded-full border border-dark-600" style="background-color: {{ spool.color }}"></div>
+                                            <span class="text-sm">{{ spool.color_name }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-20 bg-dark-700 rounded-full h-2">
+                                                <div class="h-2 rounded-full {% if spool.remaining_pct >= 50 %}bg-green-600{% elif spool.remaining_pct >= 20 %}bg-yellow-600{% else %}bg-red-600{% endif %}"
+                                                     style="width: {{ spool.remaining_pct }}%"></div>
+                                            </div>
+                                            <div class="flex flex-col">
+                                                <span class="text-sm">{{ spool.remaining_pct }}%</span>
+                                                <span class="text-xs text-gray-400">~{{ (spool.remaining_pct / 100 * (spool.initial_weight_g - spool.empty_spool_g)) | round }}g</span>
+                                            </div>
+                                            <div class="flex items-center space-x-2">
+                                                <button onclick="updateWeight('{{ spool.id }}')" 
+                                                        class="p-1 text-xs bg-dark-700 hover:bg-dark-600 rounded-md border border-dark-600">
+                                                    <i class="fa-solid fa-scale-balanced"></i>
+                                                </button>
+                                                <button onclick="showQRCode('{{ spool.id }}', '{{ spool.qr_code | replace('\n', '') }}')"
+                                                        class="p-1 text-xs bg-dark-700 hover:bg-dark-600 rounded-md border border-dark-600">
+                                                    <i class="fa-solid fa-qrcode"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        {% if spool.printer %}
+                                        <span class="text-sm">{{ spool.printer }} (Slot {{ spool.slot }})</span>
+                                        {% else %}
+                                        <span class="text-sm text-gray-400">Storage</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                                        {{ spool.last_used }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div id="qrModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-dark-800 p-6 rounded-lg shadow-xl border border-dark-700">
+            <div class="space-y-4">
+                <h3 class="text-lg font-medium">Scan to Weigh Spool</h3>
+                <p class="text-sm text-gray-400">Scan this QR code with your phone to update the spool weight</p>
+                <div id="qrDisplay" class="flex justify-center"></div>
+                <div class="text-sm text-gray-400">
+                    <p>Spool ID: <span id="qrSpoolId"></span></p>
+                </div>
+                <div class="flex justify-end">
+                    <button onclick="closeQRModal()" 
+                            class="px-4 py-2 bg-dark-700 text-gray-300 rounded-md hover:bg-dark-600">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weight Update Modal -->
+    <div id="weightModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-dark-800 p-6 rounded-lg shadow-xl border border-dark-700 w-96">
+            <h3 class="text-lg font-medium mb-4">Update Spool Weight</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Total Weight (with spool)</label>
+                    <input type="number" id="totalWeight" 
+                           class="w-full px-3 py-2 bg-dark-700 border border-dark-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Enter weight in grams">
+                </div>
+                <div class="text-sm text-gray-400">
+                    <p>Empty spool weight: <span id="emptySpoolWeight">250</span>g</p>
+                    <p>Estimated filament: <span id="estimatedFilament">750</span>g</p>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeWeightModal()" 
+                            class="px-4 py-2 bg-dark-700 text-gray-300 rounded-md hover:bg-dark-600">
+                        Cancel
+                    </button>
+                    <button onclick="saveWeight()" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSpoolId = null;
+
+        function updateWeight(spoolId) {
+            currentSpoolId = spoolId;
+            const spool = {{ spools | tojson | safe }}.find(s => s.id === spoolId);
+            document.getElementById('emptySpoolWeight').textContent = spool.empty_spool_g;
+            document.getElementById('totalWeight').value = '';
+            document.getElementById('estimatedFilament').textContent = '0';
+            document.getElementById('weightModal').classList.remove('hidden');
+        }
+
+        function showQRCode(spoolId, qrCode) {
+            currentSpoolId = spoolId;
+            document.getElementById('qrSpoolId').textContent = spoolId;
+            document.getElementById('qrDisplay').innerHTML = qrCode;
+            document.getElementById('qrModal').classList.remove('hidden');
+        }
+
+        function closeQRModal() {
+            document.getElementById('qrModal').classList.add('hidden');
+        }
+
+        function closeWeightModal() {
+            document.getElementById('weightModal').classList.add('hidden');
+            currentSpoolId = null;
+        }
+
+        function calculateEstimatedFilament() {
+            const totalWeight = parseFloat(document.getElementById('totalWeight').value) || 0;
+            const emptyWeight = parseFloat(document.getElementById('emptySpoolWeight').textContent);
+            const estimated = Math.max(0, totalWeight - emptyWeight);
+            document.getElementById('estimatedFilament').textContent = estimated.toFixed(0);
+        }
+
+        document.getElementById('totalWeight').addEventListener('input', calculateEstimatedFilament);
+
+        // Check if we were opened via QR code
+        if (window.location.protocol === 'pandaherd:') {
+            const pathParts = window.location.pathname.split('/');
+            if (pathParts[1] === 'weigh') {
+                const spoolId = pathParts[2];
+                updateWeight(spoolId);
+            }
+        }
+
+        async function saveWeight() {
+            const totalWeight = parseFloat(document.getElementById('totalWeight').value);
+            if (!totalWeight) {
+                alert('Please enter a valid weight');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/filament/${currentSpoolId}/weight`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        total_weight_g: totalWeight
+                    })
+                });
+
+                if (response.ok) {
+                    // Reload the page to show updated weights
+                    window.location.reload();
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Failed to update weight');
+                }
+            } catch (error) {
+                alert('Failed to update weight');
+            }
+        }
+    </script>
+</body>
+</html>
